@@ -9,7 +9,7 @@ COPY . /app
 
 RUN apk update && \
   apk upgrade && \
-  apk add --no-cache jq build-base curl bash && \
+  apk add --no-cache jq build-base curl bash python3 && \
   gem install bundler -v $BUNDLER_VERSION
 
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
@@ -17,6 +17,11 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
 
 RUN bundle config set --local path 'vendor/bundle'
 RUN bundle install
+
+RUN python3 -m venv venv
+
+ENV PATH="/app/venv/bin:$PATH"
+RUN pip3 install requests
 
 EXPOSE 4000
 
