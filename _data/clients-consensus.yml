@@ -30,7 +30,7 @@
   lang: Rust
   donate: https://protocol-guild.readthedocs.io/en/latest/index.html
   opensource: true
-  supported_version: v6.0.1
+  supported_version: v7.0.1
 # - name: Lodestar
 #   link: https://lodestar.chainsafe.io/
 #   github: https://github.com/ChainSafe/lodestar
@@ -53,7 +53,7 @@
   lang: Nim
   donate: 
   opensource: true
-  supported_version: v24.12.0
+  supported_version: v25.5.0
 - name: Prysm
   link: https://prysmaticlabs.com/
   github: https://github.com/prysmaticlabs/prysm
@@ -65,7 +65,7 @@
   # donate: funded # Supported by Offchain Labs
   donate: https://protocol-guild.readthedocs.io/en/latest/index.html
   opensource: true
-  supported_version: v5.2.0
+  supported_version: v6.0.4
 - name: Teku
   link: https://consensys.net/knowledge-base/ethereum-2/teku/
   github: https://github.com/ConsenSys/teku
@@ -77,5 +77,5 @@
   # donate: funded # funded by ConsenSys
   donate: https://protocol-guild.readthedocs.io/en/latest/index.html
   opensource: true
-  supported_version: v24.12.1
+  supported_version: v25.6.0
 
