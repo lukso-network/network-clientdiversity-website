@@ -24,8 +24,8 @@ exit_on_report_error = False
 google_form_error_report_url = os.environ.get("")
 
 # URLS
-blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL")
-node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL")
+blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or 'http://localhost:8000'
+node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or 'http://localhost:10000'
 
 # enter values for local testing
 # rated_token = ""
@@ -348,7 +348,7 @@ def node_crawler_marketshare():
 
 
 def get_data():
-  # blockprint_marketshare()
+  blockprint_marketshare()
   node_crawler_marketshare()
 
 
