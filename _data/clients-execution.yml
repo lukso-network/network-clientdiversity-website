@@ -63,7 +63,7 @@
   lang: Golang
   donate: https://protocol-guild.readthedocs.io/en/latest/index.html
   opensource: true
-  supported_version: v1.16.1
+  supported_version: v1.15.11
 - name: Nethermind
   link: http://nethermind.io/
   github: https://github.com/NethermindEth/nethermind
