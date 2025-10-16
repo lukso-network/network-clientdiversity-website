@@ -20,7 +20,7 @@ redirect_from: # jekyll-redirect-from
 # Global variables
 analytics_tag: ""
 default_consensus_source: blockprint # Options: blockprint, migalabs, rated 
-default_execution_source: node_crawler # Options: node crawler 
+default_execution_source: rpc # Options: rpc, node crawler 
 
 # Notification Bar
 enable_notification: false

@@ -70,6 +70,20 @@
                 {%- assign node_crawler = site.data.node_crawler | last -%}
                 {%- include partials/components/alert.html data=node_crawler.data.other type="execution" -%}
               </div>
+            <!-- RPC -->
+            {%- assign visibility = "d-none" -%}
+            {%- if site.default_execution_source == "rpc" -%}
+              {%- assign visibility = "" -%}
+            {%- endif -%}
+            <div class="{{visibility}} text-start flex-grow-1 rpc execution-data">
+              {%- assign rpc = site.data.rpc | last -%}
+              {%- assign rpc_coverage = rpc.data.other.validators_percentage | times: 100 | round: 1 -%}
+              {%- include partials/components/progress-bar.html data=rpc.data.distribution round=true -%}
+              <div class="text-center small">
+                Data fetched from a JSON-RPC node.<br>
+                Data may not be 100% accurate. (<a href="/methodology">Read more</a>) <br>
+              </div>
+            </div>
             <!-- Node Crawler -->
             {%- assign visibility = "d-none" -%}
             {%- if site.default_execution_source == "node_crawler" -%}
@@ -90,6 +104,14 @@
                 <div class="me-2 fw-bold">
                   <span>Data source </span>
                   <a href="/methodology" style="color: #055160;">(read more)</a>:
+                </div>
+                {%- assign checked = "" -%}
+                {%- if site.default_execution_source == "rpc" -%}
+                  {%- assign checked = "checked" -%}
+                {%- endif -%}
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="datasourcesEC" id="dataSourceEC2" value="rpc"  onclick="setDataSource('rpc', 'execution');" {{checked}}>
+                  <label class="form-check-label" for="dataSourceEC2">RPC</label>
                 </div>
                 {%- assign checked = "" -%}
                 {%- if site.default_execution_source == "node_crawler" -%}

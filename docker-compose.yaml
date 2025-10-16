@@ -1,0 +1,9 @@
+services:
+  frontend:
+    container_name: frontend
+    build: .
+    network_mode: host
+    # environment:
+    #   - JEKYLL_ENV=production
+    restart: always
+    command: ["exec", "jekyll", "serve", "--host", "0.0.0.0", "--no-watch"]

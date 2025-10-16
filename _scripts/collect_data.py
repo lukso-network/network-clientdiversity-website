@@ -24,8 +24,9 @@ exit_on_report_error = False
 google_form_error_report_url = os.environ.get("")
 
 # URLS
-blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or 'http://localhost:8000'
-node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or 'http://localhost:10000'
+blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or 'http://34.147.25.139:8000'
+node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or 'http://34.147.25.139:10000'
+rpc_addr = os.environ.get("RPC_BASE_URL") or 'http://34.147.25.139:8545'
 
 # enter values for local testing
 # rated_token = ""
@@ -161,6 +162,8 @@ def pprint(data):
   pp.pprint(data)
 
 
+######################################## BLOCKPRINT
+
 def get_blockprint_marketshare_data():  
   initial_timestamp = 1684856400
   initial_epoch = 0
@@ -257,7 +260,7 @@ def blockprint_marketshare():
   save_to_file("../_data/blockprint.json", processed_marketshare_data)
 
 
-########################################
+######################################## NODE CRAWLER
 
 
 def get_node_crawler_marketshare_data():
@@ -347,10 +350,104 @@ def node_crawler_marketshare():
   save_to_file("../_data/node_crawler.json", processed_data)
 
 
+######################################## RPC 
+
+
+def get_rpc_marketshare_data():
+  url = f'{rpc_addr}'
+  payload = '{"jsonrpc": "2.0", "params": [], "id": "1", "method": "admin_peers"}'
+
+  headers = {
+    "Content-Type": "application/json"
+  }
+
+  response = fetch_json(url, payload=payload, headers=headers)
+
+  pprint(response)
+  return response
+
+
+def process_rpc_marketshare_data(raw_data):
+# {
+#   "jsonrpc": "2.0",
+#   "id": 1,
+#   "result": [
+#     {
+#       "name": "Geth/v1.15.11-stable-36b2371c/linux-amd64/go1.24.2",
+#       "name": "erigon/v2.61.3-76181961/linux-amd64/go1.22.12",
+#       ""
+#       ...
+#     },
+# ...
+
+  main_clients = ["geth", "erigon", "nethermind", "besu", "reth"]
+  threshold_percentage = 0.5 # represented as a percent, not a decimal
+  sample_size = 0
+  reformatted_data = dict.fromkeys(main_clients, 0)
+  filtered_data = [{"name": "other", "value": 0}]
+  marketshare_data = []
+  extra_data = {}
+  final_data = {}
+
+  pprint(raw_data)
+  # reformat data into a list of dicts
+  for item in raw_data["data"]["result"]:
+    pprint(item)
+    name = str(item["name"]).split("/")[0].lower()
+    reformatted_data[name] += 1
+    sample_size += 1
+
+  # filter out items either under the threshold and not in the main_clients list
+  for client, count in reformatted_data.items():
+    if client in main_clients:
+      filtered_data.append({"name": client, "value": count})
+    elif (count / sample_size * 100) >= threshold_percentage:
+      filtered_data.append({"name": client, "value": count})
+    else:
+      filtered_data[0]["value"] += count
+  # pprint(["filtered_data", filtered_data])
+
+  # calculate the marketshare for each client
+  for item in filtered_data:
+    marketshare = item["value"] / sample_size
+    marketshare_data.append({"name": item["name"], "value": marketshare, "accuracy": "no data"})
+  # pprint(["marketshare_data", marketshare_data])
+
+  # sort the list by marketshare descending
+  sorted_data = sorted(marketshare_data, key=lambda k : k['value'], reverse=True)
+  # pprint(["sorted_data", sorted_data])
+
+  # supplemental data
+  extra_data["data_source"] = "rpc"
+  extra_data["has_majority"] = False
+  extra_data["has_supermajority"] = False
+  extra_data["danger_client"] = ""
+  if sorted_data[0]["value"] >= .50:
+    extra_data["has_majority"] = True
+    extra_data["danger_client"] = sorted_data[0]["name"]
+  if sorted_data[0]["value"] >= .66:
+    extra_data["has_supermajority"] = True
+  extra_data["top_client"] = sorted_data[0]["name"]
+  # pprint(["extra_data", extra_data])
+
+  # create final data dict
+  final_data["distribution"] = sorted_data
+  final_data["other"] = extra_data
+  print_data("processed", final_data, "final_data_rpc")
+
+  return final_data
+
+
+def rpc_marketshare():
+  raw_data = get_rpc_marketshare_data()
+  save_to_file("../_data/raw/rpc_raw.json", raw_data)
+  processed_data = process_rpc_marketshare_data(raw_data)
+  save_to_file("../_data/rpc.json", processed_data)
+
 def get_data():
+  rpc_marketshare()
   blockprint_marketshare()
   node_crawler_marketshare()
-
-
+    
 get_data()
 
