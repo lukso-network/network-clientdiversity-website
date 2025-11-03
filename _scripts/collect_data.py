@@ -380,7 +380,7 @@ def get_extra_data_marketshare_data():
 
       except:
         decoded = extra_data.decode()
-        results.append(decoded)
+        results.append(decoded.lower())
 
   return results
 
@@ -455,9 +455,9 @@ def extra_data_marketshare():
 
 
 def get_data():
-  # blockprint_marketshare()
   # node_crawler_marketshare()
   extra_data_marketshare()
+  blockprint_marketshare()
 
 
 get_data()
