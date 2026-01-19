@@ -1,4 +1,4 @@
-FROM ruby:3.3-alpine3.20
+FROM ruby:3.3-alpine3.20 AS builder
 
 WORKDIR /app
 
@@ -7,24 +7,26 @@ ENV BUNDLER_VERSION='2.5.14'
 
 COPY . /app
 
-RUN apk update && \
-  apk upgrade && \
-  apk add --no-cache jq build-base curl bash python3 && \
-  gem install bundler -v $BUNDLER_VERSION
+RUN apk add --no-cache jq build-base curl bash python3 && \
+    gem install bundler -v $BUNDLER_VERSION
 
-RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    truncate -s 0 /var/log/*log
-
-RUN bundle config set --local path 'vendor/bundle'
-RUN bundle install
+RUN bundle config set --local path 'vendor/bundle' && \
+    bundle install
 
 RUN python3 -m venv venv
-
 ENV PATH="/app/venv/bin:$PATH"
 RUN pip3 install requests
 
+RUN bundle exec jekyll build
+
+# Production stage - lightweight static server
+FROM nginx:alpine
+
+COPY --from=builder /app/_site /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Run as non-root
+RUN chown -R nginx:nginx /usr/share/nginx/html
+USER nginx
+
 EXPOSE 4000
-
-ENTRYPOINT ["bundle"]
-CMD ["exec", "jekyll", "serve"]
-
