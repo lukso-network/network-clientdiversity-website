@@ -1,3 +1,5 @@
+import re
+from typing import Sequence
 import requests
 import os
 import math
@@ -5,7 +7,9 @@ import time
 import json
 import pprint
 from datetime import datetime, timezone
-
+from rlp.codec import decode
+from web3 import Web3 
+import rlp
 
 current_time = round(time.time()) # seconds
 date = datetime.now(timezone.utc).strftime('%Y-%m-%d') # yyyy-mm-dd
@@ -23,9 +27,12 @@ exit_on_report_error = False
 
 google_form_error_report_url = os.environ.get("")
 
+node_ip = os.environ.get("RPC_NODE_IP") or '0.0.0.0'
+
 # URLS
-blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or 'http://localhost:8000'
-node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or 'http://localhost:10000'
+blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or f'http://{node_ip}:8000'
+node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or f'http://{node_ip}:10000'
+node_rpc_addr = os.environ.get("EXTRA_DATA_NODE_URL") or f'http://{node_ip}:8545'
 
 # enter values for local testing
 # rated_token = ""
@@ -347,9 +354,110 @@ def node_crawler_marketshare():
   save_to_file("../_data/node_crawler.json", processed_data)
 
 
+########################################
+
+
+def get_extra_data_marketshare_data():
+  w3 = Web3(Web3.HTTPProvider(node_rpc_addr))
+  head = w3.eth.get_block_number()
+  block_range = 60 * 60 * 2 * 7 # a week range of blocks (2 == 24 hours / 12 seconds-per-block)
+
+  results = [];
+  
+  for i in range(head - block_range, head):
+    block = w3.eth.get_block(i)
+    extra_data = block.get('extraData')
+    if extra_data is None:
+      continue
+    else:
+      try:
+        decoded = rlp.decode(extra_data)
+        decoded_str = '';
+        for sect in decoded:
+          decoded_str += re.sub('^[\x00-\x1f]+', '', sect.decode()) + '/'
+
+        results.append(decoded_str.lower())
+
+      except:
+        decoded = extra_data.decode()
+        results.append(decoded.lower())
+
+  return results
+
+
+def process_extra_data_marketshare_data(raw_data: Sequence[str]):
+  # [ '...geth...', '...besu...', '...nethermind...' ] etc.
+
+  main_clients = ["geth", "erigon", "nethermind", "besu", "reth"]
+  threshold_percentage = 0.5 # represented as a percent, not a decimal
+  sample_size = 0
+  reformatted_data = dict.fromkeys(main_clients, 0)
+
+  filtered_data = [{"name": "other", "value": 0}]
+  marketshare_data = []
+  extra_data = {}
+  final_data = {}
+
+  pprint(raw_data)
+  # reformat data into a list of dicts
+  for item in raw_data:
+    for client in main_clients:
+      if item.find(client) >= 0:
+        reformatted_data[client] += 1
+        sample_size += 1 
+
+  # filter out items either under the threshold and not in the main_clients list
+  for client, count in reformatted_data.items():
+    if client in main_clients:
+      filtered_data.append({"name": client, "value": count})
+    elif (count / sample_size * 100) >= threshold_percentage:
+      filtered_data.append({"name": client, "value": count})
+    else:
+      filtered_data[0]["value"] += count
+  # pprint(["filtered_data", filtered_data])
+
+  # calculate the marketshare for each client
+  for item in filtered_data:
+    marketshare = item["value"] / sample_size
+    marketshare_data.append({"name": item["name"], "value": marketshare, "accuracy": "no data"})
+  # pprint(["marketshare_data", marketshare_data])
+
+  # sort the list by marketshare descending
+  sorted_data = sorted(marketshare_data, key=lambda k : k['value'], reverse=True)
+  # pprint(["sorted_data", sorted_data])
+
+  # supplemental data
+  extra_data["data_source"] = "node_crawler"
+  extra_data["has_majority"] = False
+  extra_data["has_supermajority"] = False
+  extra_data["danger_client"] = ""
+  if sorted_data[0]["value"] >= .50:
+    extra_data["has_majority"] = True
+    extra_data["danger_client"] = sorted_data[0]["name"]
+  if sorted_data[0]["value"] >= .66:
+    extra_data["has_supermajority"] = True
+  extra_data["top_client"] = sorted_data[0]["name"]
+  # pprint(["extra_data", extra_data])
+
+  # create final data dict
+  final_data["distribution"] = sorted_data
+  final_data["other"] = extra_data
+  print_data("processed", final_data, "final_data_node_crawler")
+
+  return final_data
+
+
+def extra_data_marketshare():
+  raw_data = get_extra_data_marketshare_data()
+  save_to_file("../_data/raw/extra_data_raw.json", raw_data)
+  processed_data = process_extra_data_marketshare_data(raw_data)
+  save_to_file("../_data/extra_data.json", processed_data)
+
+
 def get_data():
-  blockprint_marketshare()
-  node_crawler_marketshare()
+  # node_crawler_marketshare()
+  extra_data_marketshare()
+  # blockprint_marketshare()
 
 
 get_data()
