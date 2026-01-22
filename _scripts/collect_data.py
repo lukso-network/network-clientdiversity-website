@@ -27,12 +27,12 @@ exit_on_report_error = False
 
 google_form_error_report_url = os.environ.get("")
 
-node_ip = '34.147.25.139'
+node_ip = os.environ.get("NODE_IP") or '0.0.0.0'
 
 # URLS
 blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or f'http://{node_ip}:8000'
 node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or f'http://{node_ip}:10000'
-node_rpc_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or f'http://{node_ip}:8545'
+node_rpc_addr = os.environ.get("EXTRA_DATA_NODE_URL") or f'http://{node_ip}:8545'
 
 # enter values for local testing
 # rated_token = ""
@@ -457,7 +457,7 @@ def extra_data_marketshare():
 def get_data():
   # node_crawler_marketshare()
   extra_data_marketshare()
-  blockprint_marketshare()
+  # blockprint_marketshare()
 
 
 get_data()
