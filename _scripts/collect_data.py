@@ -27,7 +27,7 @@ exit_on_report_error = False
 
 google_form_error_report_url = os.environ.get("")
 
-node_ip = os.environ.get("NODE_IP") or '0.0.0.0'
+node_ip = os.environ.get("RPC_NODE_IP") or '0.0.0.0'
 
 # URLS
 blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or f'http://{node_ip}:8000'
