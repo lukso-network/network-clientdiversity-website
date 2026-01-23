@@ -29,6 +29,9 @@ google_form_error_report_url = os.environ.get("")
 
 node_ip = os.environ.get("RPC_NODE_IP") or '0.0.0.0'
 
+# Data directory (default: ../_data relative to script location)
+data_dir = os.environ.get("DATA_DIR") or os.path.join(os.path.dirname(__file__), '..', '_data')
+
 # URLS
 blockprint_api_addr = os.environ.get("BLOCKPRINT_API_BASE_URL") or f'http://{node_ip}:8000'
 node_crawler_api_addr = os.environ.get("NODE_CRAWLER_API_BASE_URL") or f'http://{node_ip}:10000'
@@ -63,9 +66,10 @@ def fetch_json(url, method="GET", payload={}, headers={}, retries=2):
     return response
 
 def save_to_file(rel_path, data):
-  if not rel_path.startswith("/"):
-    rel_path = "/" + rel_path
-    abs_path = os.path.dirname(__file__) + rel_path
+  # Build absolute path from data_dir
+  abs_path = os.path.join(data_dir, rel_path)
+  # Ensure parent directory exists
+  os.makedirs(os.path.dirname(abs_path), exist_ok=True)
   # skip file save if using test data
   todays_data =  {
     "date":date,
@@ -134,10 +138,7 @@ def report_error(error, context=""):
 
 
 def print_file(rel_path):
-  # add leading / to relative path if not present
-  if not rel_path.startswith("/"):
-    rel_path = "/" + rel_path
-  abs_path = os.path.dirname(__file__) + rel_path
+  abs_path = os.path.join(data_dir, rel_path)
   if os.path.isfile(abs_path):
     with open(abs_path, 'r') as f:
       contents = json.load(f)
@@ -259,9 +260,9 @@ def process_blockprint_marketshare_data(raw_marketshare_data):
 
 def blockprint_marketshare():
   raw_marketshare_data = get_blockprint_marketshare_data()
-  save_to_file("../_data/raw/blockprint_raw.json", raw_marketshare_data)
+  save_to_file("raw/blockprint_raw.json", raw_marketshare_data)
   processed_marketshare_data = process_blockprint_marketshare_data(raw_marketshare_data)
-  save_to_file("../_data/blockprint.json", processed_marketshare_data)
+  save_to_file("blockprint.json", processed_marketshare_data)
 
 
 ########################################
@@ -349,9 +350,9 @@ def process_node_crawler_marketshare_data(raw_data):
 
 def node_crawler_marketshare():
   raw_data = get_node_crawler_marketshare_data()
-  save_to_file("../_data/raw/node_crawler_raw.json", raw_data)
+  save_to_file("raw/node_crawler_raw.json", raw_data)
   processed_data = process_node_crawler_marketshare_data(raw_data)
-  save_to_file("../_data/node_crawler.json", processed_data)
+  save_to_file("node_crawler.json", processed_data)
 
 
 ########################################
@@ -449,9 +450,9 @@ def process_extra_data_marketshare_data(raw_data: Sequence[str]):
 
 def extra_data_marketshare():
   raw_data = get_extra_data_marketshare_data()
-  save_to_file("../_data/raw/extra_data_raw.json", raw_data)
+  save_to_file("raw/extra_data_raw.json", raw_data)
   processed_data = process_extra_data_marketshare_data(raw_data)
-  save_to_file("../_data/extra_data.json", processed_data)
+  save_to_file("extra_data.json", processed_data)
 
 
 def get_data():

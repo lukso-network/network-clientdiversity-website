@@ -1,0 +1,18 @@
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+# Install build dependencies for web3
+RUN apk add --no-cache gcc musl-dev libffi-dev
+
+# Install Python dependencies
+RUN pip install --no-cache-dir requests web3 rlp
+
+# Copy the script
+COPY _scripts/collect_data.py /app/_scripts/
+
+# Default data directory (override via DATA_DIR env in K8s)
+ENV DATA_DIR=/data
+
+# Run the collector
+CMD ["python", "/app/_scripts/collect_data.py"]
