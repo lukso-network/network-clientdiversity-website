@@ -19,14 +19,23 @@ RUN pip3 install requests
 
 RUN bundle exec jekyll build
 
-# Production stage - lightweight static server
-FROM nginx:alpine
+# Production stage - lightweight Python server
+FROM python:3.12-alpine
 
-COPY --from=builder /app/_site /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Run as non-root
-RUN chown -R nginx:nginx /usr/share/nginx/html
-USER nginx
+COPY --from=builder /app/_site /app/_site
+COPY server.py /app/server.py
+
+# Create non-root user
+RUN adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+ENV PORT=4000
+ENV STATIC_DIR=/app/_site
+ENV DATA_PATH=/data
 
 EXPOSE 4000
+
+CMD ["python", "/app/server.py"]

@@ -64,20 +64,13 @@
             <div class="text-center small mb-4">
               Execution Clients stats are based on <strong>graffiti-like messages</strong> left by the clients proposing the blocks.
             </div>
-            <!-- Execution Client Alerts -->
-              <div class="d-none">
-                {%- assign extra_data = site.data.extra_data | last -%}
-                {%- include partials/components/alert.html data=extra_data.data.other type="execution" -%}
+            <!-- Execution Client Alerts (dynamic) -->
+            <div id="execution-alert-container"></div>
+            <!-- Proposed blocks' extra data (dynamic) -->
+            <div class="text-start flex-grow-1 extra_data execution-data">
+              <div id="execution-progress-container">
+                <div class="text-center text-muted">Loading execution client data...</div>
               </div>
-            <!-- Proposed blocks' extra data -->
-            {%- assign visibility = "d-none" -%}
-            {%- if site.default_execution_source == "extra_data" -%}
-              {%- assign visibility = "" -%}
-            {%- endif -%}
-            <div class="{{visibility}} text-start flex-grow-1 extra_data execution-data">
-              {%- assign extra_data = site.data.extra_data | last -%}
-              {%- assign extra_data_coverage = extra_data.data.other.validators_percentage | times: 100 | round: 1 -%}
-              {%- include partials/components/progress-bar.html data=extra_data.data.distribution round=true -%}
               <div class="text-center small">
                 Data provided from network blocks.
               </div>
