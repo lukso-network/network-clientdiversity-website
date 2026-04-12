@@ -361,27 +361,37 @@ def node_crawler_marketshare():
 def get_extra_data_marketshare_data():
   w3 = Web3(Web3.HTTPProvider(node_rpc_addr))
   head = w3.eth.get_block_number()
-  block_range = 60 * 60 * 2 * 7 # a week range of blocks (2 == 24 hours / 12 seconds-per-block)
+  block_range = 60 * 60 * 2 * 7 # a week range of blocks (7200 blocks/day * 7 days = 50400)
 
-  results = [];
-  
-  for i in range(head - block_range, head):
-    block = w3.eth.get_block(i)
-    extra_data = block.get('extraData')
-    if extra_data is None:
-      continue
-    else:
+  results = []
+  start_block = head - block_range
+  batch_size = 500
+
+  for batch_start in range(start_block, head, batch_size):
+    batch_end = min(batch_start + batch_size, head)
+    payload = [
+      {"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": [hex(i), False], "id": i}
+      for i in range(batch_start, batch_end)
+    ]
+    resp = requests.post(node_rpc_addr, json=payload, timeout=60)
+    resp.raise_for_status()
+    for block_resp in resp.json():
+      result = block_resp.get("result") or {}
+      extra_data_hex = result.get("extraData")
+      if not extra_data_hex:
+        continue
+      extra_data = bytes.fromhex(extra_data_hex[2:])
       try:
         decoded = rlp.decode(extra_data)
-        decoded_str = '';
+        decoded_str = ''
         for sect in decoded:
           decoded_str += re.sub('^[\x00-\x1f]+', '', sect.decode()) + '/'
-
         results.append(decoded_str.lower())
-
       except:
-        decoded = extra_data.decode()
-        results.append(decoded.lower())
+        try:
+          results.append(extra_data.decode().lower())
+        except:
+          pass
 
   return results
 
